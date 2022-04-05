@@ -1,4 +1,5 @@
 # Imports
+import warnings
 import glob
 import os
 from src.approaches.train_audio2landmark import Audio2landmark_model
@@ -9,8 +10,10 @@ import pickle
 import argparse
 import numpy as np
 import sys
+from dotmap import DotMap
 sys.path.append('thirdparty/AdaptiveWingLoss')
 
+warnings.filterwarnings("ignore")
 
 # Global Flags
 ADD_NAIVE_EYE = False
@@ -22,15 +25,15 @@ DEMO_CH = 'ape2.jpg'
 
 class Animator():
     def __init__(self, inputImage, inputAudio, outputFN="out.mp4", outputFolder="ape_src", audio_dir="audio"):
-        self.args = {
+        self.args = DotMap({
             'jpg': f'{inputImage}.jpg',
             'jpg_bg': f'{inputImage}_bg.jpg',
             'inner_lip': False,
             'out': outputFN,
-            'load_AUTOVC_name': 'examples/ckpt/ckpt_autovc.pth',
-            'load_a2l_G_name': 'examples/ckpt/ckpt_speaker_branch.pth',
-            'load_a2l_C_name': 'examples/ckpt/ckpt_content_branch.pth',
-            'load_G_name': 'examples/ckpt/ckpt_116_i2i_comb.pth',
+            'load_AUTOVC_name': f'{audio_dir}/ckpt/ckpt_autovc.pth',
+            'load_a2l_G_name': f'{audio_dir}/ckpt/ckpt_speaker_branch.pth',
+            'load_a2l_C_name': f'{audio_dir}/ckpt/ckpt_content_branch.pth',
+            'load_G_name': f'{audio_dir}/ckpt/ckpt_116_i2i_comb.pth',
             'amp_lip_x': 2.0,
             'amp_lip_y': 2.0,
             'amp_pos': 0.5,
@@ -56,10 +59,10 @@ class Animator():
             'lambda_laplacian_smooth_loss': 1.0,
             'use_11spk_only': False,
             'audio_input_directory': audio_dir,
-        }
+        })
 
         # Input Image
-        self.DEMO_CHARACTER = self.args.jpg.split('.')[0]
+        self.DEMO_CHARACTER = self.args["jpg"].split('.')[0]
 
         # Load Closed Mouth Facial Landmarks
         self.face_shape = np.loadtxt(
@@ -83,7 +86,7 @@ class Animator():
         for eachAudio in ains:
             # For each audio input change the sample frequency to 16000 Hz and save in audio_dir/tmp.wav
             os.system(
-                f'ffmpeg -y -loglevel error -i {self.args.audio_input_directory}/{eachAudio} -ar 16000 {self.args.audio_input_directory}/tmp.wav')
+                f'ffmpeg -y -loglevel error -i {self.args.audio_input_directory}/{eachAudio} -ar 16000 {self.args.audio_input_directory}/tmp.wav > log/audio_processing_log.txt')
 
             # Replace old audio with new one of new sampling frequency
             shutil.copyfile(f'{self.args.audio_input_directory}/tmp.wav',
@@ -96,9 +99,7 @@ class Animator():
             # Append to list of audio embeddings
             au_emb.append(mean_emb.reshape(-1))
 
-            print("---------------------------------")
-            print('Processing audio file', eachAudio)
-            print("---------------------------------")
+            print('[+] Processing audio file', eachAudio)
 
             # Generate embeddings for each sample for each eachAudio
             c = AutoVC_mel_Convertor(self.args.audio_input_directory)
@@ -110,7 +111,7 @@ class Animator():
         if(os.path.isfile(f'{self.args.audio_input_directory}/tmp.wav')):
             os.remove(f'{self.args.audio_input_directory}/tmp.wav')
 
-        return {"audio_inputs": ains, "audio_input_emb": au_emb, "audio_sample_emb": au_data}
+        return tuple({"audio_inputs": ains, "audio_input_emb": au_emb, "audio_sample_emb": au_data}.values())
 
     def GetFacialLandmarkData(self, au_data):
         fl_data = []
@@ -168,8 +169,9 @@ class Animator():
     def DenormalizeOutputToOriginalImage(self):
         fls_names = glob.glob1(self.args.img_input_dir, 'pred_fls_*.txt')
         fls_names.sort()
-        print('fls_names' + fls_names)
+        print('fls_names: ',  fls_names)
         print("Facial Landmarks Names ====> ", fls_names)
+        import os
 
         for i in range(0, len(fls_names)):
             # Pick all names of input audios
@@ -194,7 +196,7 @@ class Animator():
             from util.utils import get_puppet_info
 
             bound, scale, shift = get_puppet_info(
-                self.DEMO_CHARACTER, ROOT_DIR='ape_src')
+                self.DEMO_CHARACTER, ROOT_DIR=self.args.img_input_dir)
 
             fls = fl.reshape((-1, 68, 3))
 
@@ -211,7 +213,7 @@ class Animator():
             fls = fls.reshape((-1, 68, 3))
 
             # if (DEMO_CH in ['paint', 'mulaney', 'cartoonM', 'beer', 'color', 'JohnMulaney', 'vangogh', 'jm', 'roy', 'lineface']):
-            if(not opt_parser.inner_lip):
+            if(not self.args.inner_lip):
                 r = list(range(0, 68))
                 fls = fls[:, r, :]
                 fls = fls[:, :, 0:2].reshape(-1, 68 * 2)
@@ -232,7 +234,7 @@ class Animator():
 
             # static_points.txt
             static_frame = np.loadtxt(os.path.join(
-                'ape_src', '{}_face_open_mouth.txt'.format(DEMO_CH)))
+                self.args.img_input_dir, f'{self.DEMO_CHARACTER}_face_open_mouth.txt'))
             static_frame = static_frame[r, 0:2]
             static_frame = np.concatenate(
                 (static_frame, bound.reshape(-1, 2)), axis=0)
@@ -240,46 +242,42 @@ class Animator():
                        static_frame, fmt='%.2f')
 
             # triangle_vtx_index.txt
-            shutil.copy(os.path.join('ape_src', DEMO_CH + '_delauney_tri.txt'),
+            shutil.copy(os.path.join(self.args.output_folder, self.DEMO_CHARACTER + '_delauney_tri.txt'),
                         os.path.join(output_dir, 'triangulation.txt'))
 
+            # Check what is the thing it deletes?
             os.remove(os.path.join('ape_src', fls_names[i]))
 
+            # Use the generated reference points to create corresponding frames for final image
             # ==============================================
             # Step 4 : Vector art morphing
             # ==============================================
+
             warp_exe = os.path.join(os.getcwd(), 'facewarp', 'facewarp.exe')
-            import os
 
             if (os.path.exists(os.path.join(output_dir, 'output'))):
                 shutil.rmtree(os.path.join(output_dir, 'output'))
             os.mkdir(os.path.join(output_dir, 'output'))
-            os.chdir('{}'.format(os.path.join(output_dir, 'output')))
+            os.chdir(f"{os.path.join(output_dir, 'output')}")
             cur_dir = os.getcwd()
             print(cur_dir)
 
-            if(os.name == 'nt'):
-                ''' windows '''
-                os.system('{} {} {} {} {} {}'.format(
-                    warp_exe,
-                    os.path.join(cur_dir, '..', '..', opt_parser.jpg),
-                    os.path.join(cur_dir, '..', 'triangulation.txt'),
-                    os.path.join(cur_dir, '..', 'reference_points.txt'),
-                    os.path.join(cur_dir, '..', 'warped_points.txt'),
-                    os.path.join(cur_dir, '..', '..', opt_parser.jpg_bg),
-                    '-novsync -dump'))
-            else:
-                ''' linux '''
-                os.system('wine {} {} {} {} {} {}'.format(
-                    warp_exe,
-                    os.path.join(cur_dir, '..', '..', opt_parser.jpg),
-                    os.path.join(cur_dir, '..', 'triangulation.txt'),
-                    os.path.join(cur_dir, '..', 'reference_points.txt'),
-                    os.path.join(cur_dir, '..', 'warped_points.txt'),
-                    os.path.join(cur_dir, '..', '..', opt_parser.jpg_bg),
-                    '-novsync -dump'))
+            os.system('WINEDEBUG=fixme-all wine {} {} {} {} {} {}'.format(
+                warp_exe,
+                os.path.join(cur_dir, '..', '..', self.args.jpg),
+                os.path.join(cur_dir, '..', 'triangulation.txt'),
+                os.path.join(cur_dir, '..', 'reference_points.txt'),
+                os.path.join(cur_dir, '..', 'warped_points.txt'),
+                os.path.join(cur_dir, '..', '..', self.args.jpg_bg),
+                # '-novsync -dump'))
+                ' -dump'))
 
-            os.system('ffmpeg -y -r 62.5 -f image2 -i "%06d.tga" -i {} -pix_fmt yuv420p -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2" -shortest -strict -2 {}'.format(
-                os.path.join(cur_dir, '..', '..', '..', 'examples', ain),
-                os.path.join(cur_dir, '..', 'out.mp4')
+            # Stitch the generated frames
+            os.system('ffmpeg -y -r 62.5 -f image2 -i "%06d.tga" -i {} -pix_fmt yuv420p -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2" -shortest -strict -2 {} > {}'.format(
+                os.path.join(cur_dir, '..', '..', '..',
+                             f'{self.args.audio_input_directory}', ain),
+                os.path.join(cur_dir, '..', 'out.mp4'),
+                os.path.join(cur_dir, '..', '..', '..',
+                             'log/ffmpeg_stitch_log.txt')
+
             ))

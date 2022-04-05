@@ -5,6 +5,25 @@ import pandas as pd
 import cv2
 import numpy as np
 
+def initCleanLog():
+    # print(os.system("pwd"))
+    os.system("touch log/audio_processing_log.txt")
+    os.system("touch log/ffmpeg_stitch_log.txt")
+
+
+def updateFrontend():
+    db = pd.read_csv("./ape_database/apes.csv")
+
+    apes_list = db["image"].to_list()
+
+    with open('./frontend/public/apes_availability.csv', "w") as apes:
+        apes.write(f"ape_code,availablity\n")
+
+        for ape_name in apes_list:
+            if(os.path.exists(os.path.join("./ape_database/ipfs", ape_name + '.pts'))):
+                apes.write(f"{ape_name},yes\n")
+
+
 
 def cp_landmarks_for_mouth(ape1, ape2):
     shutil.copy2("./ape_src/{}.pts".format(ape1), "./ape_src/{}.pts".format(ape2))
