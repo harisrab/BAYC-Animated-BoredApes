@@ -80,6 +80,8 @@ parser.add_argument('--use_11spk_only', default=False, action='store_true')
 
 opt_parser = parser.parse_args()
 
+print("Opt Parser ===> ", vars(opt_parser))
+
 DEMO_CH = opt_parser.jpg.split('.')[0]
 
 shape_3d = np.loadtxt('ape_src/{}_face_close_mouth.txt'.format(DEMO_CH))

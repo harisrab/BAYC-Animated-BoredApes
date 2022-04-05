@@ -50,15 +50,16 @@ if __name__ == "__main__":
 
     # AnimateMouth("Bored", 1, "./IO/sample.wav")
 
-    image_input = "ape2"
-    #image_input = "Qma1aZPn7iS1vxkfip6kjGjbA5EUPDaunsApJJ8mUt8pyT"
-    audio_input = "M6_04_16k"
-
     # Landmarker = LandmarkDetector(
     #     inputImage=f"{image_input}.jpg")
     # detected_landmarks = Landmarker.detect()
 
     # Landmarker.edit()
+
+    
+    image_input = "ape2"
+    audio_input = "M6_04_16k"
+
 
     cartoonize = Cartoonizer(
         image=image_input, bg=f"{image_input}_bg.jpg", audioName=audio_input)
