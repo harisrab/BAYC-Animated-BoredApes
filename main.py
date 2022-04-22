@@ -1,32 +1,15 @@
 from landmarks_extractor import LandmarkDetector
 from helpers import *
 from animator import Animator
+from bg_remover import *
 import os
 import json
 import pandas as pd
 
-np.seterr(all="ignore")
 
+# np.seterr(all="ignore")
 
-if __name__ == "__main__":
-
-    # AnimateMouth("Bored", 1, "./IO/sample.wav")
-
-    # Landmarker = LandmarkDetector(
-    #     inputImage=f"{image_input}.jpg")
-    # detected_landmarks = Landmarker.detect()
-
-    # Landmarker.edit()
-
-    initCleanLog()
-
-    image_input = "ape5"
-    audio_input = "Welcome"
-    audio_directory = "audio"
-    outputFolder = "ape_src"
-
-    # cp_landmarks_for_mouth("ape2", "ape5")
-
+def PostDetection_Pipeline(image_input, audio_input, audio_directory, outputFolder, inputFolder):
     a = Animator(inputImage=image_input, inputAudio=audio_input,
                  outputFolder=outputFolder, audio_dir=audio_directory)
 
@@ -37,6 +20,8 @@ if __name__ == "__main__":
 
     # Load  and clean facial Landmark data
     facial_landmark_data = a.GetFacialLandmarkData(au_data)
+    print("fl_data")
+    print(facial_landmark_data)
 
     print("[+] Facial Landmark Data Loaded")
 
@@ -48,3 +33,32 @@ if __name__ == "__main__":
     a.DenormalizeOutputToOriginalImage()
     print("[+] Output Denormalized")
 
+
+if __name__ == "__main__":
+
+
+
+    # Landmarker.edit()
+
+    # initCleanLog()
+
+    # images = ["ape1", "ape2", "ape3", "ape4", "ape5"]
+    image_input = "ape2"
+    audio_input = "obama"
+    audio_directory = "audio"
+    outputFolder = "ape_src"
+    inputFolder = "ape_src"
+
+    PostDetection_Pipeline(image_input, audio_input, audio_directory, outputFolder, inputFolder)
+
+
+    # Landmarker = LandmarkDetector(inputImage=f"{image_input}.jpg")
+    # Landmarker.detect()
+    # Landmarker.edit()
+
+    
+
+    
+
+
+    

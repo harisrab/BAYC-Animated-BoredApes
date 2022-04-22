@@ -83,6 +83,7 @@ class Audio2landmark_model():
         self.t_shape_idx = (27, 28, 29, 30, 33, 36, 39, 42, 45)
         self.anchor_t_shape = np.loadtxt(
             'src/dataset/utils/STD_FACE_LANDMARKS.txt')
+
         self.anchor_t_shape = self.anchor_t_shape[self.t_shape_idx, :]
 
         with open(os.path.join(f'{opt_parser.audio_input_directory}', 'dump', 'emb.pickle'), 'rb') as fp:

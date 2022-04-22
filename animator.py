@@ -11,6 +11,8 @@ import argparse
 import numpy as np
 import sys
 from dotmap import DotMap
+from transform_helpers import *
+
 sys.path.append('thirdparty/AdaptiveWingLoss')
 
 warnings.filterwarnings("ignore")
@@ -26,7 +28,7 @@ DEMO_CH = 'ape2.jpg'
 class Animator():
     def __init__(self, inputImage, inputAudio, outputFN="out.mp4", outputFolder="ape_src", audio_dir="audio"):
         self.args = DotMap({
-            'jpg': f'{inputImage}.jpg',
+            'jpg': f'{inputImage}.png',
             'jpg_bg': f'{inputImage}_bg.jpg',
             'inner_lip': False,
             'out': outputFN,
@@ -113,6 +115,9 @@ class Animator():
 
         return tuple({"audio_inputs": ains, "audio_input_emb": au_emb, "audio_sample_emb": au_data}.values())
 
+
+
+
     def GetFacialLandmarkData(self, au_data):
         fl_data = []
         audio_dir = self.args.audio_input_directory
@@ -123,6 +128,8 @@ class Animator():
             au_length = au.shape[0]
             fl = np.zeros(shape=(au_length, 68 * 3))
             fl_data.append((fl, info))
+            print(au_length)
+            print(info)
             rot_tran.append(np.zeros(shape=(au_length, 3, 4)))
             rot_quat.append(np.zeros(shape=(au_length, 4)))
             anchor_t_shape.append(np.zeros(shape=(au_length, 68 * 3)))
@@ -159,7 +166,16 @@ class Animator():
     def AudioToLandmark(self, au_emb):
         ''' STEP 4: RUN audio -> landmark network'''
 
-        model = Audio2landmark_model(self.args, jpg_shape=self.face_shape)
+        # Input Facial Landmarks
+        # Apply Mouth Shrink Transform to self.face_shape
+        face_shape = ShrinkMouthTransform(self.face_shape)
+
+
+
+
+        
+        
+        model = Audio2landmark_model(self.args, jpg_shape=face_shape)
         if(len(self.args.reuse_train_emb_list) == 0):
             model.test(au_emb=au_emb)
         else:
@@ -168,6 +184,15 @@ class Animator():
 
     def DenormalizeOutputToOriginalImage(self):
         fls_names = glob.glob1(self.args.img_input_dir, 'pred_fls_*.txt')
+
+
+
+        # Predicted Facial Landmarks 
+        # Apply Mouth Swell Transform on fls_names on each frame
+
+        SwellMouthTransform(self.args, fls_names)
+
+
         fls_names.sort()
         print('fls_names: ',  fls_names)
         print("Facial Landmarks Names ====> ", fls_names)
@@ -269,8 +294,8 @@ class Animator():
                 os.path.join(cur_dir, '..', 'reference_points.txt'),
                 os.path.join(cur_dir, '..', 'warped_points.txt'),
                 os.path.join(cur_dir, '..', '..', self.args.jpg_bg),
-                # '-novsync -dump'))
-                ' -dump'))
+                '-novsync -dump'))
+            # ' -dump'))
 
             # Stitch the generated frames
             os.system('ffmpeg -y -r 62.5 -f image2 -i "%06d.tga" -i {} -pix_fmt yuv420p -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2" -shortest -strict -2 {} > {}'.format(

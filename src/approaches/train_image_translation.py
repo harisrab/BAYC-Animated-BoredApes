@@ -358,7 +358,8 @@ class Image_translation_block():
                 fls_in = image_in[j * 16:j * 16 + 16, 0:3, :, :].cpu().detach().numpy().transpose((0, 2, 3, 1))
 
                 for k in range(g_out.shape[0]):
-                    frame = np.concatenate((ref_in[k], g_out[k], fls_in[k], ref_out[k]), axis=1) * 255.0
+                    # frame = np.concatenate((ref_in[k], g_out[k], fls_in[k], ref_out[k]), axis=1) * 255.0
+                    frame = g_out[i] * 255.0
                     writer.write(frame.astype(np.uint8))
 
             writer.release()
@@ -383,7 +384,8 @@ class Image_translation_block():
             fls[:, 0::3] += 130
             fls[:, 1::3] += 80
 
-        writer = cv2.VideoWriter('out.mp4', cv2.VideoWriter_fourcc(*'mjpg'), 62.5, (256 * 3, 256))
+        # writer = cv2.VideoWriter('out.mp4', cv2.VideoWriter_fourcc(*'mjpg'), 62.5, (256 * 3, 256))
+        writer = cv2.VideoWriter('out.mp4', cv2.VideoWriter_fourcc(*'mjpg'), 62.5, (256, 256))
 
         for i, frame in enumerate(fls):
 

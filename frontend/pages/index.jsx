@@ -4,8 +4,7 @@ import { Bubble } from 'react-chartjs-2'
 import Chart from 'chart.js/auto'
 import 'chartjs-plugin-dragdata'
 import axios from 'axios'
-import { StyledEngineProvider } from '@mui/material/styles'
-import SingleRowSelectionGrid from './components/demo'
+import SelectBar from './components/SelectBar'
 
 const data = {
   labels: ['January'],
@@ -65,32 +64,21 @@ const App = () => {
     'https://lh3.googleusercontent.com/b7OuAKbk2H9tTp5YZeWRUueVQw6gi9_CTF6ZeG45d2SnczejUdyO6KhVb04IMYdHU5A6kpJuGaWU-NN84suTpL2wqQ1b6LjqQyD9mw=w600'
   )
 
-  useEffect(() => {
-    axios
-      .get('/api/load_data')
-      .then((res) => {
-        console.log(res)
-      })
-      .catch((err) => {
-        console.log(err)
-      })
-  }, [])
-
   return (
-    <div className="w-[1000px] h-screen flex items-center justify-center">
-      <StyledEngineProvider injectFirst>
-        <SingleRowSelectionGrid />
-      </StyledEngineProvider>
+    <div className="w-screen h-screen flex items-center justify-center flex-col">
+      <div className="">
+        <SelectBar setCurrentImg={setCurrentImg} />
 
-      <div
-        className="w-[400px] h-[400px]"
-        style={{
-          backgroundImage: `url(${currentImg})`,
-          backgroundRepeat: 'no-repeat',
-          backgroundSize: 'cover',
-        }}
-      >
-        <Bubble data={data} options={options} />
+        <div
+          className="w-[400px] h-[400px]"
+          style={{
+            backgroundImage: `url(${currentImg})`,
+            backgroundRepeat: 'no-repeat',
+            backgroundSize: 'cover',
+          }}
+        >
+          <Bubble data={data} options={options} />
+        </div>
       </div>
     </div>
   )

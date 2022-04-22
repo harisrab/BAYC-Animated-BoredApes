@@ -89,6 +89,8 @@ class LandmarkDetector():
 
     def edit(self):
         """ This function reads the <image>.pts file and opens a window to edit points. Press Q to exit. """
+        pts0=[]
+
         if(os.path.exists(os.path.join(self.data_dir, self.CH + '_face_open_mouth.txt'))):
             pts0 = np.loadtxt(os.path.join(
                 self.data_dir, self.CH + '_face_open_mouth.txt'))
@@ -106,7 +108,7 @@ class LandmarkDetector():
 
             pts0 = np.array(pts).reshape((68, 2))
 
-        pts = np.copy(pts0)
+        pts = np.copy(pts0) 
         img0 = cv2.imread(os.path.join(self.data_dir, self.test_data))
         img = np.copy(img0)
         node = -1
@@ -174,6 +176,7 @@ class LandmarkDetector():
             key = cv2.waitKey(1)
             if key == ord("q"):
                 break
+            
         cv2.destroyAllWindows()
 
         print('vis and refine landmark Done!')
@@ -205,6 +208,9 @@ class LandmarkDetector():
         norm_anno(self.data_dir, self.CH, param=[
                   0.7, 0.4, 0.5, 0.5], show=True)
 
+
+
+
     def use_inner_lips_only(self, INNER_ONLY=False):
         """ =================================================================
                             delauney tri
@@ -217,3 +223,5 @@ class LandmarkDetector():
         ================================================================= """
 
         delauney_tri(self.data_dir, self.test_data, INNER_ONLY)
+
+ 
