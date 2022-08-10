@@ -1,4 +1,5 @@
 """
+
  # Copyright 2020 Adobe
  # All Rights Reserved.
  
@@ -38,7 +39,7 @@ class Audio2landmark_model():
         self.std_face_id = torch.tensor(
             self.std_face_id, requires_grad=False, dtype=torch.float).to(device)
 
-        self.eval_data = Audio2landmark_Dataset(dump_dir=f'{opt_parser.audio_input_directory}/dump',
+        self.eval_data = Audio2landmark_Dataset(dump_dir=f'{opt_parser.dump_dir}',
                                                 dump_name='random',
                                                 status='val',
                                                 num_window_frames=18,
@@ -86,7 +87,7 @@ class Audio2landmark_model():
 
         self.anchor_t_shape = self.anchor_t_shape[self.t_shape_idx, :]
 
-        with open(os.path.join(f'{opt_parser.audio_input_directory}', 'dump', 'emb.pickle'), 'rb') as fp:
+        with open(os.path.join(f'{opt_parser.dump_dir}', 'emb.pickle'), 'rb') as fp:
             self.test_embs = pickle.load(fp)
 
         print('====================================')
@@ -173,6 +174,7 @@ class Audio2landmark_model():
         # Step 1: init setup
         self.G.eval()
         self.C.eval()
+        
         data = self.eval_data
         dataloader = self.eval_dataloader
 
@@ -180,6 +182,8 @@ class Audio2landmark_model():
         for i, batch in enumerate(dataloader):
 
             global_id, video_name = data[i][0][1][0], data[i][0][1][1][:-4]
+            
+            print("!!!!! Video Name: ", video_name)
 
             # Step 2.1: load batch data from dataloader (in segments)
             inputs_fl, inputs_au, inputs_emb = batch
@@ -278,8 +282,8 @@ class Audio2landmark_model():
                 # ''' Visualize result in landmarks '''
                 if(vis_fls):
                     from util.vis import Vis
-                    Vis(fls=fake_fls_np, filename=video_name.split('\\')[-1].split('/')[-1], fps=62.5,
-                        audio_filenam=os.path.join(f'{self.opt_parser.audio_input_directory}', video_name.split('\\')[-1].split('/')[-1]+'.wav'))
+                    Vis(output_folder=self.opt_parser.output_folder, fls=fake_fls_np, filename=video_name.split('\\')[-1].split('/')[-1], fps=62.5,
+                            audio_filename=os.path.join(f'{self.opt_parser.audio_input_directory}', video_name.split('\\')[-1].split('/')[-1]+'.wav'))
 
     def __close_face_lip__(self, fl):
         facelandmark = fl.reshape(-1, 68, 3)

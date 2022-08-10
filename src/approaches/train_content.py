@@ -43,6 +43,7 @@ class Audio2landmark_model():
                                                 status='train',
                                                num_window_frames=opt_parser.num_window_frames,
                                                num_window_step=opt_parser.num_window_step)
+        
         self.train_dataloader = torch.utils.data.DataLoader(self.train_data, batch_size=opt_parser.batch_size,
                                                            shuffle=False, num_workers=0,
                                                            collate_fn=self.train_data.my_collate_in_segments_noemb)

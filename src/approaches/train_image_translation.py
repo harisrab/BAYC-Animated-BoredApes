@@ -420,7 +420,8 @@ class Image_translation_block():
 
 
             for i in range(g_out.shape[0]):
-                frame = np.concatenate((ref_in[i], g_out[i], fls_in[i]), axis=1) * 255.0
+                #frame = np.concatenate((ref_in[i], g_out[i], fls_in[i]), axis=1) * 255.0
+                frame = g_out[i] * 255.0
                 writer.write(frame.astype(np.uint8))
 
         writer.release()

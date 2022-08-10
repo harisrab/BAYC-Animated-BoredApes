@@ -22,30 +22,31 @@ ADD_NAIVE_EYE = False
 GEN_AUDIO = True
 GEN_FLS = True
 
-DEMO_CH = 'ape2.jpg'
+DEMO_CH = 'doll.jpg'
 
+# Delete tmp.wav file in directory
+if os.path.exists("./input/audio/tmp.wav"):
+    os.remove("./input/audio/tmp.wav")
 
 class Animator():
-    def __init__(self, inputImage, inputAudio, outputFN="out.mp4", outputFolder="ape_src", audio_dir="audio"):
+    def __init__(self, char_name, inputAudio, image_input_dir):
         self.args = DotMap({
-            'jpg': f'{inputImage}.png',
-            'jpg_bg': f'{inputImage}_bg.jpg',
-            'inner_lip': False,
-            'out': outputFN,
-            'load_AUTOVC_name': f'{audio_dir}/ckpt/ckpt_autovc.pth',
-            'load_a2l_G_name': f'{audio_dir}/ckpt/ckpt_speaker_branch.pth',
-            'load_a2l_C_name': f'{audio_dir}/ckpt/ckpt_content_branch.pth',
-            'load_G_name': f'{audio_dir}/ckpt/ckpt_116_i2i_comb.pth',
+            'jpg': f'{char_name}.png',
+            'jpg_bg': f'{char_name}_bg.jpg',
+            'load_AUTOVC_name': f'./models/ckpt_autovc.pth',
+            'load_a2l_G_name': f'./models/ckpt_speaker_branch.pth',
+            'load_a2l_C_name': f'./models/ckpt_content_branch.pth',
+            'load_G_name': f'./models/ckpt_116_i2i_comb.pth',
             'amp_lip_x': 2.0,
             'amp_lip_y': 2.0,
             'amp_pos': 0.5,
             'reuse_train_emb_list': [],
             'add_audio_in': False,
             'comb_fan_awing': False,
-            'output_folder': outputFolder,
-            'img_input_dir': outputFolder,
+            'output_folder': "./output",
+            'img_input_dir': image_input_dir,
             'test_end2end': True,
-            'dump_dir': '',
+            'dump_dir': './models/dump',
             'pos_dim': 7,
             'use_prior_net': True,
             'transformer_d_model': 32,
@@ -60,15 +61,14 @@ class Animator():
             'emb_coef': 3.0,
             'lambda_laplacian_smooth_loss': 1.0,
             'use_11spk_only': False,
-            'audio_input_directory': audio_dir,
+            'audio_input_directory': "./input/audio",
         })
 
         # Input Image
         self.DEMO_CHARACTER = self.args["jpg"].split('.')[0]
 
         # Load Closed Mouth Facial Landmarks
-        self.face_shape = np.loadtxt(
-            f'ape_src/{self.DEMO_CHARACTER}_face_close_mouth.txt')
+        self.face_shape = np.loadtxt(f'{self.args.img_input_dir}/{self.DEMO_CHARACTER}_face_close_mouth.txt')
 
     def GenerateAudioInput(self):
         """ This function returns all input audio file names, corresponding embeddings, and embeddings for samples"""
@@ -120,7 +120,7 @@ class Animator():
 
     def GetFacialLandmarkData(self, au_data):
         fl_data = []
-        audio_dir = self.args.audio_input_directory
+        dump_dir = self.args.dump_dir
 
         rot_tran, rot_quat, anchor_t_shape = [], [], []
 
@@ -135,27 +135,26 @@ class Animator():
             anchor_t_shape.append(np.zeros(shape=(au_length, 68 * 3)))
 
         # Create data dumps if they don't exist
-        if(os.path.exists(os.path.join(audio_dir, 'dump', 'random_val_fl.pickle'))):
-            os.remove(os.path.join(audio_dir, 'dump', 'random_val_fl.pickle'))
+        if(os.path.exists(os.path.join(dump_dir, 'random_val_fl.pickle'))):
+            os.remove(os.path.join(dump_dir, 'random_val_fl.pickle'))
 
-        if(os.path.exists(os.path.join(audio_dir, 'dump', 'random_val_fl_interp.pickle'))):
-            os.remove(os.path.join(audio_dir, 'dump',
-                      'random_val_fl_interp.pickle'))
+        if(os.path.exists(os.path.join(dump_dir, 'random_val_fl_interp.pickle'))):
+            os.remove(os.path.join(dump_dir, 'random_val_fl_interp.pickle'))
 
-        if(os.path.exists(os.path.join(audio_dir, 'dump', 'random_val_au.pickle'))):
-            os.remove(os.path.join(audio_dir, 'dump', 'random_val_au.pickle'))
+        if(os.path.exists(os.path.join(dump_dir, 'random_val_au.pickle'))):
+            os.remove(os.path.join(dump_dir, 'random_val_au.pickle'))
 
-        if (os.path.exists(os.path.join(audio_dir, 'dump', 'random_val_gaze.pickle'))):
-            os.remove(os.path.join(audio_dir, 'dump', 'random_val_gaze.pickle'))
+        if (os.path.exists(os.path.join(dump_dir, 'random_val_gaze.pickle'))):
+            os.remove(os.path.join(dump_dir, 'random_val_gaze.pickle'))
 
         # Pack the landmark data, audio_embedding data, and gaze data
-        with open(os.path.join(audio_dir, 'dump', 'random_val_fl.pickle'), 'wb') as fp:
+        with open(os.path.join(dump_dir, 'random_val_fl.pickle'), 'wb') as fp:
             pickle.dump(fl_data, fp)
 
-        with open(os.path.join(audio_dir, 'dump', 'random_val_au.pickle'), 'wb') as fp:
+        with open(os.path.join(dump_dir, 'random_val_au.pickle'), 'wb') as fp:
             pickle.dump(au_data, fp)
 
-        with open(os.path.join(audio_dir, 'dump', 'random_val_gaze.pickle'), 'wb') as fp:
+        with open(os.path.join(dump_dir, 'random_val_gaze.pickle'), 'wb') as fp:
             gaze = {'rot_trans': rot_tran, 'rot_quat': rot_quat,
                     'anchor_t_shape': anchor_t_shape}
 
@@ -168,13 +167,9 @@ class Animator():
 
         # Input Facial Landmarks
         # Apply Mouth Shrink Transform to self.face_shape
-        face_shape = ShrinkMouthTransform(self.face_shape)
+        # face_shape = ShrinkMouthTransform(self.face_shape) 
+        face_shape = self.face_shape
 
-
-
-
-        
-        
         model = Audio2landmark_model(self.args, jpg_shape=face_shape)
         if(len(self.args.reuse_train_emb_list) == 0):
             model.test(au_emb=au_emb)
@@ -183,14 +178,12 @@ class Animator():
         print('Finished generating landmarks for each audio sample')
 
     def DenormalizeOutputToOriginalImage(self):
-        fls_names = glob.glob1(self.args.img_input_dir, 'pred_fls_*.txt')
-
-
+        fls_names = glob.glob1(self.args.output_folder, 'pred_fls_*.txt')
 
         # Predicted Facial Landmarks 
         # Apply Mouth Swell Transform on fls_names on each frame
 
-        SwellMouthTransform(self.args, fls_names)
+        # SwellMouthTransform(self.args, fls_names)
 
 
         fls_names.sort()
@@ -206,9 +199,10 @@ class Animator():
             # Take (1) input audio and corresponding (2) facial landmarks
             ain = ains[i]
             fl = np.loadtxt(os.path.join(
-                self.args.img_input_dir, fls_names[i])).reshape((-1, 68, 3))
+                self.args.output_folder, fls_names[i])).reshape((-1, 68, 3))
 
-            output_dir = os.path.join('ape_src', fls_names[i][:-4])
+            #Name the output directory
+            output_dir = os.path.join(self.args.output_folder, fls_names[i][:-4])
 
             print("Named output directory: ", output_dir)
 
@@ -267,41 +261,44 @@ class Animator():
                        static_frame, fmt='%.2f')
 
             # triangle_vtx_index.txt
-            shutil.copy(os.path.join(self.args.output_folder, self.DEMO_CHARACTER + '_delauney_tri.txt'),
+            shutil.copy(os.path.join(self.args.img_input_dir, self.DEMO_CHARACTER + '_delauney_tri.txt'),
                         os.path.join(output_dir, 'triangulation.txt'))
 
             # Check what is the thing it deletes?
-            os.remove(os.path.join('ape_src', fls_names[i]))
+            os.remove(os.path.join(self.args.output_folder, fls_names[i]))
 
             # Use the generated reference points to create corresponding frames for final image
             # ==============================================
             # Step 4 : Vector art morphing
             # ==============================================
+            print("[+] Starting Vector Art Morphing")
 
             warp_exe = os.path.join(os.getcwd(), 'facewarp', 'facewarp.exe')
+            warp_linux = os.path.join(os.getcwd(), 'facewarp', "facewarp")
 
             if (os.path.exists(os.path.join(output_dir, 'output'))):
                 shutil.rmtree(os.path.join(output_dir, 'output'))
+
             os.mkdir(os.path.join(output_dir, 'output'))
             os.chdir(f"{os.path.join(output_dir, 'output')}")
             cur_dir = os.getcwd()
             print(cur_dir)
 
-            os.system('WINEDEBUG=fixme-all wine {} {} {} {} {} {}'.format(
-                warp_exe,
-                os.path.join(cur_dir, '..', '..', self.args.jpg),
+            os.system('{} {} {} {} {} {}'.format(
+                warp_linux,
+                os.path.join(cur_dir, '..', '..', '..',  self.args.img_input_dir, self.args.jpg),
                 os.path.join(cur_dir, '..', 'triangulation.txt'),
                 os.path.join(cur_dir, '..', 'reference_points.txt'),
                 os.path.join(cur_dir, '..', 'warped_points.txt'),
-                os.path.join(cur_dir, '..', '..', self.args.jpg_bg),
-                '-novsync -dump'))
+                os.path.join(cur_dir, '..', '..', '..', self.args.img_input_dir, self.args.jpg_bg)))
+            #'-novsync -dump'))
             # ' -dump'))
-
+        
             # Stitch the generated frames
             os.system('ffmpeg -y -r 62.5 -f image2 -i "%06d.tga" -i {} -pix_fmt yuv420p -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2" -shortest -strict -2 {} > {}'.format(
                 os.path.join(cur_dir, '..', '..', '..',
                              f'{self.args.audio_input_directory}', ain),
-                os.path.join(cur_dir, '..', 'out.mp4'),
+                os.path.join(cur_dir, '..', '..', f'{fls_names[i][:-4]}.mp4'),
                 os.path.join(cur_dir, '..', '..', '..',
                              'log/ffmpeg_stitch_log.txt')
 

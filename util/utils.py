@@ -205,7 +205,9 @@ def vis_landmark_on_plt(fl,  x_offset=0.0, show_now=True, c='r'):
 
 def try_mkdir(dir):
     try:
-        os.mkdir(dir)
+        # os.mkdir(dir)
+        
+        os.system(f"sudo mkdir {dir}")
     except:
         pass
 
@@ -320,7 +322,7 @@ def get_puppet_info(DEMO_CH, ROOT_DIR):
                           h//4, -B,
                           h // 2, -B,
                           h//4*3, -B]).reshape(1, -1)
-        ss = np.loadtxt(os.path.join(ROOT_DIR, DEMO_CH + '_scale_shift.txt'))
+        ss = np.loadtxt(os.path.join(ROOT_DIR, DEMO_CH + '_scale_shift2.txt'))
         scale, shift = ss[0], np.array([ss[1], ss[2]])
 
     return bound, scale, shift

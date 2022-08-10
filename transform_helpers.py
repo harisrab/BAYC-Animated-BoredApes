@@ -16,6 +16,40 @@ def ShrinkMouthTransform(face_shape):
     for i in range(0, len(face_shape)):
         landmarks_xy.append(face_shape[i][:-1])
 
+    # # Inner mouth landmarks transform
+    # inner_mouth_xy = landmarks_xy[60:67]
+    # inner_mouth_xyz = landmarks_xyz[60:67]
+
+    # inner_mouth_polygon = Polygon(inner_mouth_xy)
+
+    # shrunk_inner_mouth = affinity.scale(
+    #     inner_mouth_polygon, xfact=-0.2, yfact=-0.2, origin='centroid')
+    # shrunk_inner_mouth = affinity.rotate(
+    #     shrunk_inner_mouth, angle=180, origin="centroid")
+
+    # shrunk_inner_mouth_xy = shrunk_inner_mouth.exterior.coords[:-1]
+
+    # final_inner_mouth = []
+
+    # for i, coord in enumerate(shrunk_inner_mouth_xy):
+    #     c = [coord[0], coord[1], inner_mouth_xyz[i][2]]
+    #     final_inner_mouth.append(c)
+
+    # final_inner_mouth = np.array(final_inner_mouth)
+
+    # # Recover the mouth landmarks
+    # face_shape = np.concatenate(
+    #     (landmarks_xyz[:60], final_inner_mouth, landmarks_xyz[67:]), axis=0)
+
+    # landmarks_xy = []
+    # landmarks_xyz = face_shape
+
+    # Iterate over each point and pair it to form coordinates
+    # c = 0
+    # for i in range(0, len(face_shape)):
+    #     landmarks_xy.append(face_shape[i][:-1])
+
+    # Outer mouth landmarks transform
     mouth_xy = landmarks_xy[48:59]
     mouth_xyz = landmarks_xyz[48:59]
 
@@ -40,10 +74,9 @@ def ShrinkMouthTransform(face_shape):
     print("final Mouth         = ", final_mouth)
     print("Landmarks XYZ (2nd) = ", landmarks_xyz[59:])
 
+    # Recover the mouth landmarks
     recovered_face_shape = np.concatenate(
         (landmarks_xyz[:48], final_mouth, landmarks_xyz[59:]), axis=0)
-
-    # recovered_face_shape = landmarks_xyz[:48] + final_mouth + landmarks_xyz[59:]
 
     print("Recovered_face_shape =====> ", recovered_face_shape)
 
@@ -93,31 +126,44 @@ def SwellMouthTransform(args, fls_names):
             # print(len(landmarks_xyz))
 
             # Pick out mouth coordinates.
-            mouth_xy = landmarks_xy[48:59]
-            mouth_xyz = landmarks_xyz[48:59]
+            outer_mouth_xy = landmarks_xy[48:59]
+            outer_mouth_xyz = landmarks_xyz[48:59]
+
+            inner_mouth_xy = landmarks_xy[60:67]
+            inner_mouth_xyz = landmarks_xyz[60:67]
+            # landmarks_xyz[60:67]
 
             # Convert to polygon.
-            mouth_polygon = Polygon(mouth_xy)
+            outer_mouth_polygon = Polygon(outer_mouth_xy)
+            inner_mouth_polygon = Polygon(inner_mouth_xy)
 
             # Apply affine transformation. Swell.
-            swollen_mouth = affinity.scale(
-                mouth_polygon, xfact=2.5, yfact=2.5, origin='centroid')
+            swollen_outer_mouth = affinity.scale(
+                outer_mouth_polygon, xfact=2.8, yfact=2.8, origin='centroid')
 
-            swollen_mouth_xy = swollen_mouth.exterior.coords[:-1]
+            swollen_outer_mouth_xy = swollen_outer_mouth.exterior.coords[:-1]
 
-            print(len(mouth_xy))
-            print(len(mouth_xyz))
-            print(len(swollen_mouth_xy))
+            swollen_inner_mouth = affinity.scale(
+                inner_mouth_polygon, xfact=2.8, yfact=2.8, origin='centroid')
 
-            final_mouth = []
+            swollen_inner_mouth_xy = swollen_inner_mouth.exterior.coords[:-1]
 
-            for i, coord in enumerate(swollen_mouth_xy):
-                c = [coord[0], coord[1], mouth_xyz[i][2]]
-                final_mouth.append(c)
+            final_outer_mouth = []
 
-            # print(final_mouth)
+            for i, coord in enumerate(swollen_outer_mouth_xy):
+                c = [coord[0], coord[1], outer_mouth_xyz[i][2]]
+                final_outer_mouth.append(c)
 
-            final_line = landmarks_xyz[:48] + final_mouth + landmarks_xyz[59:]
+            final_inner_mouth = []
+
+            for i, coord in enumerate(swollen_inner_mouth_xy):
+                c = [coord[0], coord[1], inner_mouth_xyz[i][2]]
+                final_inner_mouth.append(c)
+
+            # final_line = landmarks_xyz[:48] + final_outer_mouth + \
+            #     landmarks_xyz[59:60] + final_inner_mouth + landmarks_xyz[67:]
+            final_line = landmarks_xyz[:48] + final_outer_mouth + \
+                landmarks_xyz[59:]
 
             # print(landmarks)
             # Restore the line to original file.
@@ -130,6 +176,3 @@ def SwellMouthTransform(args, fls_names):
 
             print(line)
             f.write(line + "\n")
-
-            # break
-            # break

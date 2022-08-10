@@ -4,6 +4,8 @@ import json
 import pandas as pd
 import cv2
 import numpy as np
+from animator import Animator
+from bg_remover import *
 
 def initCleanLog():
     # print(os.system("pwd"))
@@ -85,4 +87,30 @@ def augment_ape(img_code):
 
     return resized_img
 
+def MakeItTalk_Inference(char_name, audio_name, image_input_dir):
+    
+    # Initialize the data required for inference
+    a = Animator(char_name, audio_name, image_input_dir)
+    
+    print("[+] Animator Pipeline Initialized")
+
+    # Process the audio data
+    ains, au_emb, au_data = a.GenerateAudioInput()
+
+    print("[+] Audio Processed")
+
+    # Load Facial Landmarks Data
+    facial_landmark_data = a.GetFacialLandmarkData(au_data)
+
+    print("[+] Facial Landmark Data Loaded")
+
+    #Generate new landmarks for each audio sample
+    a.AudioToLandmark(au_emb)
+
+    print("[+] New Landmarks Generated")
+
+    # Use Facewarp to create final frames / stitch them up to output.
+    a.DenormalizeOutputToOriginalImage()
+
+    print("[+] Output Denormalized")
 

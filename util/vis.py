@@ -19,7 +19,7 @@ OTHER_SPECIFIC_VOICE = None
 
 class Vis():
 
-    def __init__(self, fls, filename, audio_filenam=None, fps=100, frames=1000):
+    def __init__(self, fls, filename, audio_filename=None, output_folder="../output", fps=100, frames=1000):
 
         # from scipy.signal import savgol_filter
         # fls = savgol_filter(fls, 21, 3, axis=0)
@@ -37,7 +37,7 @@ class Vis():
         fls = fls.reshape((-1, 68, 3))
         fls = fls.astype(int)
         print('=================vis writer========================')
-        writer = cv2.VideoWriter(os.path.join('audio', 'tmp.mp4'),
+        writer = cv2.VideoWriter(os.path.join(output_folder, 'tmp.mp4'),
                                  cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), fps, (400, 400))
 
         frames = np.min((fls.shape[0], frames))
@@ -47,21 +47,21 @@ class Vis():
             frame = self.__vis_landmark_on_img__(frame, fls[i])
             writer.write(frame)
         writer.release()
-        print(audio_filenam)
-        if(audio_filenam is not None):
-            print(audio_filenam)
+        print(audio_filename)
+        if(audio_filename is not None):
+            print(audio_filename)
             os.system('ffmpeg -y -i {} -i {} -strict -2 -shortest {}'.format(
-                os.path.join('audio', 'tmp.mp4'),
-                audio_filenam,
-                os.path.join('audio', '{}_av.mp4'.format(filename))
+                os.path.join(output_folder, 'tmp.mp4'),
+                audio_filename,
+                os.path.join(output_folder, '{}_skeletal_anim.mp4'.format(filename))
             ))
         else:
             os.system('ffmpeg -y -i {} {}'.format(
-                os.path.join('audio', 'tmp.mp4'),
-                os.path.join('audio', '{}_av.mp4'.format(filename))
+                os.path.join(output_folder, 'tmp.mp4'),
+                os.path.join(output_folder, '{}_skeletal_anim.mp4'.format(filename))
             ))
 
-        os.remove(os.path.join('audio', 'tmp.mp4'))
+            os.remove(os.path.join(output_folder, 'tmp.mp4'))
 
     print('==============__vis_landmark_on_img__=================')
 
