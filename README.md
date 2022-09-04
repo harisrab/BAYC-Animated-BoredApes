@@ -63,13 +63,13 @@ https://remotedesktop.google.com/access/
 Follow all intructions to install and access your GCP machine using Chrome Remote Desktop
 
 To produce samples:
-1. place the source files generated from Landmarking Tool into ```./input/character_data/```
+1. place the source files generated from [Landmarking Tool](https://github.com/harisrab/LandmarkingTool/) into ```./input/character_data/```
 2. Remove all the audio files from ```./input/audio/``` and add only the one that's to be used.
 
 In ```main.py``` change
 1. the char_name to name of the file without .jpg extension.
 2. Change image_input_dir
-3. audio_name = <audio to be used>
+3. audio_name = "audio-to-be-used" without extension
 
 Run the following command in the root directory of the project.
 
