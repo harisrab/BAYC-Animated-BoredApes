@@ -12,6 +12,7 @@ import numpy as np
 import sys
 from dotmap import DotMap
 from transform_helpers import *
+from warp.warp_tool import warp
 
 sys.path.append('thirdparty/AdaptiveWingLoss')
 
@@ -179,7 +180,7 @@ class Animator():
 
     def DenormalizeOutputToOriginalImage(self):
         fls_names = glob.glob1(self.args.output_folder, 'pred_fls_*.txt')
-
+        print("Facial Landmark Names: ", fls_names)
         # Predicted Facial Landmarks 
         # Apply Mouth Swell Transform on fls_names on each frame
 
@@ -195,12 +196,14 @@ class Animator():
             # Pick all names of input audios
             ains = glob.glob1(self.args.audio_input_directory, '*.wav')
             ains.sort()
+            
+            print("Facial Landmarks Path: ", os.path.join(self.args.output_folder, fls_names[i]))
 
             # Take (1) input audio and corresponding (2) facial landmarks
             ain = ains[i]
             fl = np.loadtxt(os.path.join(
                 self.args.output_folder, fls_names[i])).reshape((-1, 68, 3))
-
+            print("Facial Landmarks Shape: ", fl.shape)
             #Name the output directory
             output_dir = os.path.join(self.args.output_folder, fls_names[i][:-4])
 
@@ -230,12 +233,19 @@ class Animator():
             fls[:, 0:48*3] = savgol_filter(fls[:, 0:48*3], 17, 3, axis=0)
             fls[:, 48*3:] = savgol_filter(fls[:, 48*3:], 11, 3, axis=0)
             fls = fls.reshape((-1, 68, 3))
+            
+            print("Rescaled Points: ", fls.shape)
+            
+            pred_video_landmarks = []
 
             # if (DEMO_CH in ['paint', 'mulaney', 'cartoonM', 'beer', 'color', 'JohnMulaney', 'vangogh', 'jm', 'roy', 'lineface']):
             if(not self.args.inner_lip):
                 r = list(range(0, 68))
                 fls = fls[:, r, :]
                 fls = fls[:, :, 0:2].reshape(-1, 68 * 2)
+
+                pred_video_landmarks = fls
+
                 fls = np.concatenate(
                     (fls, np.tile(bound, (fls.shape[0], 1))), axis=1)
                 fls = fls.reshape(-1, 160)
@@ -244,10 +254,12 @@ class Animator():
                 r = list(range(0, 48)) + list(range(60, 68))
                 fls = fls[:, r, :]
                 fls = fls[:, :, 0:2].reshape(-1, 56 * 2)
-                fls = np.concatenate(
-                    (fls, np.tile(bound, (fls.shape[0], 1))), axis=1)
+                pred_video_landmarks = fls
+                fls = np.concatenate((fls, np.tile(bound, (fls.shape[0], 1))), axis=1)
                 fls = fls.reshape(-1, 112 + bound.shape[1])
 
+            print("Rescaled V2: ", fls.shape)
+            print("Rescaled one item: ", fls[0])
             np.savetxt(os.path.join(
                 output_dir, 'warped_points.txt'), fls, fmt='%.2f')
 
@@ -265,7 +277,7 @@ class Animator():
                         os.path.join(output_dir, 'triangulation.txt'))
 
             # Check what is the thing it deletes?
-            os.remove(os.path.join(self.args.output_folder, fls_names[i]))
+            # os.remove(os.path.join(self.args.output_folder, fls_names[i]))
 
             # Use the generated reference points to create corresponding frames for final image
             # ==============================================
@@ -279,10 +291,24 @@ class Animator():
             if (os.path.exists(os.path.join(output_dir, 'output'))):
                 shutil.rmtree(os.path.join(output_dir, 'output'))
 
-            os.mkdir(os.path.join(output_dir, 'output'))
-            os.chdir(f"{os.path.join(output_dir, 'output')}")
-            cur_dir = os.getcwd()
-            print(cur_dir)
+            # =============================================
+            # Custom GUI-less Facewarp Integration
+            # =============================================
+            # os.mkdir(os.path.join(output_dir, 'output'))
+            # os.chdir(f"{os.path.join(output_dir, 'output')}")
+            # cur_dir = os.getcwd()
+            # print(cur_dir)
+
+            # cur_dir = os.path.join(os.path.abspath(os.getcwd()), "..", "..", "..")
+
+            # Custom Facewarp Integration
+            # im_lm_path = os.path.join(cur_dir, self.args.img_input_dir, self.args.jpg[:-4] + ".pts")
+            # im_path = os.path.join(cur_dir, self.args.img_input_dir, self.args.jpg)
+            
+            # warp(pred_video_landmarks, im_path, im_lm_path)
+            
+            # ==============================================
+            # ==============================================
 
             os.system('{} {} {} {} {} {}'.format(
                 warp_linux,
@@ -291,7 +317,7 @@ class Animator():
                 os.path.join(cur_dir, '..', 'reference_points.txt'),
                 os.path.join(cur_dir, '..', 'warped_points.txt'),
                 os.path.join(cur_dir, '..', '..', '..', self.args.img_input_dir, self.args.jpg_bg)))
-            #'-novsync -dump'))
+            # '-novsync -dump'))
             # ' -dump'))
         
             # Stitch the generated frames

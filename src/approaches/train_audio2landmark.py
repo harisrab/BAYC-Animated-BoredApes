@@ -278,7 +278,7 @@ class Audio2landmark_model():
                     video_name.split('\\')[-1].split('/')[-1], key)
                 np.savetxt(os.path.join(self.opt_parser.output_folder,
                            filename), fake_fls_np, fmt='%.6f')
-
+                vis_fls = True
                 # ''' Visualize result in landmarks '''
                 if(vis_fls):
                     from util.vis import Vis
