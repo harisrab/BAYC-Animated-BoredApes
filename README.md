@@ -56,15 +56,28 @@ Download the following pre-trained models to ```models/``` folder for testing yo
 
 Download pre-trained embedding [[here]](https://drive.google.com/file/d/18-0CYl5E6ungS3H4rRSHjfYvvm-WwjTI/view?usp=sharing) and save to `models/dump` folder.
 
+## Usage Details
+
+Connect to the machine using Chrome Remote Desktop
+https://remotedesktop.google.com/access/
+Follow all intructions to install and access your GCP machine using Chrome Remote Desktop
+
+To produce samples:
+1. place the source files generated from Landmarking Tool into ```./input/character_data/```
+2. Remove all the audio files from ```./input/audio/``` and add only the one that's to be used.
+
+In ```main.py``` change
+1. the char_name to name of the file without .jpg extension.
+2. Change image_input_dir
+3. audio_name = <audio to be used>
+
+Run the following command in the root directory of the project.
+
+```shell
+python main.py
+```
+
+
 ## Samples
 
-https://user-images.githubusercontent.com/62747193/188305082-3616d5c7-a0f3-4bb1-bd0a-7df5ac4de058.mp4
-
-
-https://user-images.githubusercontent.com/62747193/188305152-ae47f4ca-4799-4bf4-a6de-8a3909dd92a7.mp4
-
-
-https://user-images.githubusercontent.com/62747193/188305159-7931fd79-d05e-4932-b610-3b75ee88572d.mp4
-
-
-
+https://drive.google.com/drive/folders/1p9-LWWVvVxB31GEYU-9aQ89KYqOlaVbf?usp=sharing
