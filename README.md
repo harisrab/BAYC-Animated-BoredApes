@@ -62,6 +62,7 @@ Connect to the machine using Chrome Remote Desktop
 https://remotedesktop.google.com/access/
 Follow all intructions to install and access your GCP machine using Chrome Remote Desktop
 
+
 To produce samples:
 1. place the source files generated from [Landmarking Tool](https://github.com/harisrab/LandmarkingTool/) into ```./input/character_data/```
 2. Remove all the audio files from ```./input/audio/``` and add only the one that's to be used.
@@ -76,6 +77,8 @@ Run the following command in the root directory of the project.
 ```shell
 python main.py
 ```
+
+![Alt](https://repobeats.axiom.co/api/embed/63ea2b191f79f362d8925df8a6e5e5cbf381ef76.svg "Repobeats analytics image")
 
 
 ## Samples
