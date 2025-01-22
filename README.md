@@ -24,6 +24,7 @@ In addition, our method generalizes well for faces and characters that were not 
 > [[Colab Demo TDLR]](quick_demo_tdlr.ipynb)
 
 <img width="1334" alt="teaser" src="https://github.com/user-attachments/assets/057badb1-ec42-4d46-ab06-38f60845ca63" />
+
 ![image](https://user-images.githubusercontent.com/62747193/161796170-daecb8c3-bfd6-4ef6-b106-c0bdb1c4275e.png)
 
 
